@@ -1,45 +1,35 @@
-const EXTENSION_NAME = 'Gmaps Wiki Lookup';
-const rxGooglePlace = new RegExp(/^https:\/\/www\.google\..{2,3}\/maps\/place/);
 const LOOKUP_URL = 'https://#.wikipedia.org/w/api.php?origin=*'
 const SEARCH_SELECTOR = '.section-hero-header-title-title';
 const SEARCH_SUB_SELECTOR = '.section-hero-header-title-subtitle';
+const hasPlaceSelected = () => document.querySelectorAll(SEARCH_SELECTOR).length > 0;
 
 var mainQuery = '';
 
-var observer = new MutationObserver(() => {
+// Only start extension if regex matches a google maps site
+if(new RegExp(/https:\/\/www\.google\..{2,3}\/maps/).test(window.location.href)) {
 
-   if (document.querySelectorAll(SEARCH_SELECTOR).length > 0) {
+   if(hasPlaceSelected()) {
+      buildQuery();
+   } 
 
-      var query = document.querySelector(SEARCH_SELECTOR).textContent.trim();
-
-      if(mainQuery !== query)
-         buildQuery();
-
-      mainQuery = query;
-      observer.disconnect();
-   }
-});
-
-chrome.runtime.onMessage.addListener(
-   function (request) {
-      if (request.message === 'place-page-navigation') {
-         observer.observe(document.body, {
-            childList: true,
-            subtree: true
-         });
+   // Wait for a place to be selected by the user
+   new MutationObserver(() => {
+      if (hasPlaceSelected()) {
+         var query = document.querySelector(SEARCH_SELECTOR).textContent.trim();
+         if(mainQuery !== query) buildQuery();
+         mainQuery = query;
       }
-   }
-);
+      else
+         mainQuery = '';
+   }).observe(document.body, {
+      childList: true,
+      subtree: true
+   });
+}
 
+function buildUrl() {
 
-const buildUrl = () => {
-
-   var params = {
-      action: 'opensearch',
-      limit: '1',
-      format: 'json'
-   };
-
+   let params = { action: 'opensearch', limit: '1', format: 'json' };
    let langTag = document.querySelector('html').getAttribute('lang')
    let lang = langTag && langTag.split('-')[0];
 
@@ -49,7 +39,7 @@ const buildUrl = () => {
    return url;
 }
 
-const buildQuery = async () => {
+async function buildQuery() {
 
    let url = buildUrl() + '&search=';
    let query = [document.querySelector(SEARCH_SELECTOR).textContent.trim()];
@@ -61,14 +51,13 @@ const buildQuery = async () => {
 
       let queryString = encodeURIComponent(query.slice(0, i).join(' '));
       result = await makeQuery(url + queryString);
-      console.info(result, url);
    }
 
    if(result)
       createLink(result);
 }
 
-const makeQuery = async (url) => {
+async function makeQuery (url) {
 
    try {
       const r = await fetch(url);
@@ -84,7 +73,7 @@ const makeQuery = async (url) => {
    return false;
 }
 
-const createLink = (href) => {
+function createLink (href) {
    let wikiLink = document.createElement('a');
    let h2 = document.querySelector(SEARCH_SELECTOR);
 
@@ -94,11 +83,4 @@ const createLink = (href) => {
 
    h2.parentNode.insertBefore(wikiLink, h2);
    h2.remove();
-}
-
-if (rxGooglePlace.test(window.location.href)) {
-   observer.observe(document.body, {
-      childList: true,
-      subtree: true
-   });
 }

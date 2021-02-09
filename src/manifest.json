@@ -2,10 +2,7 @@
 	"manifest_version": 2,
 	"name": "Insert Wiki Link on Google Maps",
 	"description": "Replaces the place title in Google Maps™ with link to corresponding Wikipedia™ page (if found).",
-	"version": "1.0",
-	"background": {
-	  "scripts":["background.js"]
-	},
+	"version": "1.2",
 	"icons": { "48": "icon.png" },
 	"content_scripts": [
 		{
@@ -14,6 +11,6 @@
 		}
 	 ],
 	 "permissions": [
-		"tabs"
+		"activeTab"
 	 ]
  }
