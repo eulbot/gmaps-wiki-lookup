@@ -9,5 +9,8 @@
 		  "matches": ["<all_urls>"],
 		  "js": ["index.js"]
 		}
+	 ],
+	 "permissions": [
+		"activeTab"
 	 ]
  }
